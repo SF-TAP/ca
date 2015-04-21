@@ -13,6 +13,8 @@
 #include <net/if.h>
 #ifndef __linux__
 #include <net/if_dl.h>
+#else
+#include <netinet/ether.h>
 #endif
 
 #include <string>
