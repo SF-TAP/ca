@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 
 bool debug = true;
-pthread_mutex_t debug_mutex = NULL;
+pthread_mutex_t debug_mutex;
 
 #ifdef DEBUG
 #define MESG(format, ...) do {                             \

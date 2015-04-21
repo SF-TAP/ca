@@ -11,15 +11,12 @@
 #include <ifaddrs.h>
 
 #include <net/if.h>
+#ifndef __linux__
 #include <net/if_dl.h>
+#endif
 
 #include <string>
-
-#ifdef __linux__
-#include <netinet/ehter.h>
-#else
 #include <net/ethernet.h>
-#endif
 
 #include "common.hpp"
 #include "ether.hpp"
@@ -50,6 +47,17 @@ main(int argc, char** argv)
     char ifname[IFNAMSIZ];
     memset(ifname, 0, sizeof(ifname));
     strncpy(ifname, argv[1], strlen(argv[1]));
+
+    bool is_loopback;
+#ifndef __linux__
+    is_loopback = strncmp(ifname, "lo0", strlen("lo0"));
+#else
+    is_loopback = strncmp(ifname, "lo", strlen("lo"));
+#endif
+    if (is_loopback == 0) {
+        MESG("ca cant use with lo0.");
+        exit(EXIT_FAILURE);
+    }
 
     std::string str_ifname = ifname;
     if (!is_exist_if(if_list, str_ifname)) {
@@ -125,13 +133,13 @@ main(int argc, char** argv)
     memcpy(eth->ether_dhost, dst_mac, sizeof(dst_mac));
     memcpy(eth->ether_shost, &src_mac, sizeof(src_mac));
     eth->ether_type = htons(ETHERTYPE_IP);
-    eth->ether_type = htons(0x9000);
+    eth->ether_type = htons(0x0101);
     // 0101-01FF exp number
 
-
     int ret;
-    while (1 ) {
+    while ( 1 ) {
         ret =pcap_inject(handler, advbuf, 64);
+        //perror("pcap_inject");
         if(ret < 0) std::cout << "Failed to inject" << std::endl; 
         sleep(10);
     }
