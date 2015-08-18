@@ -17,6 +17,9 @@
 #include <netinet/ether.h>
 #endif
 
+#include <netinet/ip6.h>
+#include <netinet/icmp6.h>
+
 #include <string>
 #include <net/ethernet.h>
 
@@ -129,13 +132,55 @@ main(int argc, char** argv)
         exit(EXIT_FAILURE);
     }
 
-    uint8_t advbuf[64];
-    memset(advbuf, 0, sizeof(advbuf));
-    struct ether_header* eth = (struct ether_header*)advbuf;
-    memcpy(eth->ether_dhost, dst_mac, sizeof(dst_mac));
-    memcpy(eth->ether_shost, &src_mac, sizeof(src_mac));
-    eth->ether_type = htons(ETHERTYPE_IP);
-    eth->ether_type = htons(0x0101);
+    struct {
+        ether_header       eth;
+        ip6_hdr            ip6h;
+        nd_neighbor_advert na;
+    } ipv6_na;
+
+    memset(&ipv6_na, 0, sizeof(ipv6_na));
+
+    // set ethernet header
+    memcpy(&ipv6_na.eth.ether_dhost, dst_mac, sizeof(dst_mac));
+    memcpy(&ipv6_na.eth.ether_shost, &src_mac, sizeof(src_mac));
+    ipv6_na.eth.ether_type = htons(ETHERTYPE_IPV6);
+
+    // set IPv6 header
+    ipv6_na.ip6h.ip6_vfc  = 0x60;
+    ipv6_na.ip6h.ip6_plen = sizeof(ipv6_na.na);
+    ipv6_na.ip6h.ip6_nxt  = IPPROTO_ICMPV6;
+    ipv6_na.ip6h.ip6_hlim = 0xff;
+
+    uint8_t ipv6_dst[16] = {0xff, 0x02, 0, 0,
+                               0,    0, 0, 0,
+                               0,    0, 0, 0,
+                               0,    0, 0, 1};
+    uint8_t ipv6_src[16] = {0xfe, 0x80, 0,    0,
+                               0,    0, 0,    0,
+                               0,    0, 0, 0xff,
+                            0xfe,    0, 0,    0};
+
+    ipv6_src[ 8] = src_mac.ether_addr_octet[0] ^ 0x02;
+    ipv6_src[ 9] = src_mac.ether_addr_octet[1];
+    ipv6_src[10] = src_mac.ether_addr_octet[2];
+    ipv6_src[13] = src_mac.ether_addr_octet[3];
+    ipv6_src[14] = src_mac.ether_addr_octet[4];
+    ipv6_src[15] = src_mac.ether_addr_octet[5];
+    
+    memcpy(&ipv6_na.ip6h.ip6_dst, ipv6_dst, sizeof(ipv6_dst));
+    memcpy(&ipv6_na.ip6h.ip6_src, ipv6_src, sizeof(ipv6_src));
+
+    // set ICMPv6 Neighbor Advertisement
+    ipv6_na.na.nd_na_hdr.icmp6_type = ND_NEIGHBOR_ADVERT;
+    memcpy(&ipv6_na.na.nd_na_target, ipv6_dst, sizeof(ipv6_dst));
+    
+    // uint8_t advbuf[64];
+    // memset(advbuf, 0, sizeof(advbuf));
+    // struct ether_header* eth = (struct ether_header*)advbuf;
+    // memcpy(eth->ether_dhost, dst_mac, sizeof(dst_mac));
+    // memcpy(eth->ether_shost, &src_mac, sizeof(src_mac));
+    // eth->ether_type = htons(ETHERTYPE_IP);
+    // eth->ether_type = htons(0x0101);
     // 0101-01FF exp number
 
     int ret;
