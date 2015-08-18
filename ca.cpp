@@ -228,9 +228,17 @@ main(int argc, char** argv)
     // eth->ether_type = htons(0x0101);
     // 0101-01FF exp number
 
+    uint8_t advbuf[sizeof(ipv6_na.eth) + sizeof(ipv6_na.ip6h) +
+                   sizeof(ipv6_na.na)];
+
+    memcpy(advbuf, &ipv6_na.eth, sizeof(ipv6_na.eth));
+    memcpy(advbuf + sizeof(ipv6_na.ip6h), &ipv6_na.ip6h, sizeof(ipv6_na.ip6h));
+    memcpy(advbuf + sizeof(ipv6_na.ip6h) + sizeof(ipv6_na.ip6h), &ipv6_na.na,
+           sizeof(ipv6_na.na));
+
     int ret;
     while ( 1 ) {
-        ret = pcap_inject(handler, &ipv6_na, sizeof(ipv6_na));
+        ret = pcap_inject(handler, advbuf, sizeof(advbuf));
         //perror("pcap_inject");
         if(ret < 0) std::cout << "Failed to inject" << std::endl; 
         sleep(10);
