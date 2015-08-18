@@ -26,6 +26,32 @@
 #include "common.hpp"
 #include "ether.hpp"
 
+static inline uint16_t
+checksum(const uint8_t* buf, size_t size, uint32_t adjust)
+{
+    uint32_t sum = 0;
+    uint16_t element = 0;
+
+    while (size>0) {
+        element = (*buf)<<8;
+        buf++;
+        size--;
+        if (size>0) {
+            element |= *buf;
+            buf++;
+            size--;
+        }
+        sum += element;
+    }
+    sum += adjust;
+
+    while (sum>0xFFFF) {
+        sum = (sum>>16) + (sum&0xFFFF);
+    }
+
+    return (~sum) & 0xFFFF;
+}
+
 void usage(char* prog_name)
 {
     printf("cell advertisor\n");
@@ -133,11 +159,19 @@ main(int argc, char** argv)
     }
 
     struct {
+        uint8_t  src[16];
+        uint8_t  dst[16];
+        uint32_t len;
+        uint8_t  nxt[4];
+    } ipv6_pseudo_hdr;
+
+    struct {
         ether_header       eth;
         ip6_hdr            ip6h;
         nd_neighbor_advert na;
     } ipv6_na;
 
+    memset(&ipv6_pseudo_hdr, 0, sizeof(ipv6_pseudo_hdr));
     memset(&ipv6_na, 0, sizeof(ipv6_na));
 
     // set ethernet header
@@ -147,7 +181,7 @@ main(int argc, char** argv)
 
     // set IPv6 header
     ipv6_na.ip6h.ip6_vfc  = 0x60;
-    ipv6_na.ip6h.ip6_plen = sizeof(ipv6_na.na);
+    ipv6_na.ip6h.ip6_plen = ntohs(sizeof(ipv6_na.na));
     ipv6_na.ip6h.ip6_nxt  = IPPROTO_ICMPV6;
     ipv6_na.ip6h.ip6_hlim = 0xff;
 
@@ -175,6 +209,15 @@ main(int argc, char** argv)
     memcpy(&ipv6_na.na.nd_na_target, ipv6_dst, sizeof(ipv6_dst));
 
     // TODO: checksum
+    memcpy(ipv6_pseudo_hdr.src, ipv6_src, sizeof(ipv6_src));
+    memcpy(ipv6_pseudo_hdr.dst, ipv6_dst, sizeof(ipv6_dst));
+    ipv6_pseudo_hdr.nxt[3] = IPPROTO_ICMPV6;
+
+    uint32_t sum32;
+    sum32 = checksum((uint8_t*)&ipv6_pseudo_hdr, sizeof(ipv6_pseudo_hdr), 0);
+    sum32 = checksum((uint8_t*)&ipv6_na, sizeof(ipv6_na), sum32);
+
+    ipv6_na.na.nd_na_hdr.icmp6_cksum = ntohs(sum32);
 
     // uint8_t advbuf[64];
     // memset(advbuf, 0, sizeof(advbuf));
