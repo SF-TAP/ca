@@ -114,7 +114,7 @@ main(int argc, char** argv)
 #endif
 
     printf("src:%s\n", ether_ntoa(&src_mac));
-    printf("dst:%s\n", ether_ntoa(&src_mac));
+    printf("dst:%s\n", ether_ntoa((ether_addr*)dst_mac));
 
     char pcapbuf[PCAP_ERRBUF_SIZE];
     memset(pcapbuf, 0, sizeof(pcapbuf));
@@ -166,14 +166,16 @@ main(int argc, char** argv)
     ipv6_src[13] = src_mac.ether_addr_octet[3];
     ipv6_src[14] = src_mac.ether_addr_octet[4];
     ipv6_src[15] = src_mac.ether_addr_octet[5];
-    
+
     memcpy(&ipv6_na.ip6h.ip6_dst, ipv6_dst, sizeof(ipv6_dst));
     memcpy(&ipv6_na.ip6h.ip6_src, ipv6_src, sizeof(ipv6_src));
 
     // set ICMPv6 Neighbor Advertisement
     ipv6_na.na.nd_na_hdr.icmp6_type = ND_NEIGHBOR_ADVERT;
     memcpy(&ipv6_na.na.nd_na_target, ipv6_dst, sizeof(ipv6_dst));
-    
+
+    // TODO: checksum
+
     // uint8_t advbuf[64];
     // memset(advbuf, 0, sizeof(advbuf));
     // struct ether_header* eth = (struct ether_header*)advbuf;
@@ -185,7 +187,7 @@ main(int argc, char** argv)
 
     int ret;
     while ( 1 ) {
-        ret =pcap_inject(handler, advbuf, 64);
+        ret = pcap_inject(handler, &ipv6_na, sizeof(ipv6_na));
         //perror("pcap_inject");
         if(ret < 0) std::cout << "Failed to inject" << std::endl; 
         sleep(10);
