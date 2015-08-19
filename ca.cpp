@@ -208,7 +208,7 @@ main(int argc, char** argv)
     ipv6_na.na.nd_na_hdr.icmp6_type = ND_NEIGHBOR_ADVERT;
     memcpy(&ipv6_na.na.nd_na_target, ipv6_dst, sizeof(ipv6_dst));
 
-    // TODO: checksum
+    // checksum
     memcpy(ipv6_pseudo_hdr.src, ipv6_src, sizeof(ipv6_src));
     memcpy(ipv6_pseudo_hdr.dst, ipv6_dst, sizeof(ipv6_dst));
     ipv6_pseudo_hdr.nxt[3] = IPPROTO_ICMPV6;
@@ -219,14 +219,6 @@ main(int argc, char** argv)
 
     ipv6_na.na.nd_na_hdr.icmp6_cksum = ntohs(sum32);
 
-    // uint8_t advbuf[64];
-    // memset(advbuf, 0, sizeof(advbuf));
-    // struct ether_header* eth = (struct ether_header*)advbuf;
-    // memcpy(eth->ether_dhost, dst_mac, sizeof(dst_mac));
-    // memcpy(eth->ether_shost, &src_mac, sizeof(src_mac));
-    // eth->ether_type = htons(ETHERTYPE_IP);
-    // eth->ether_type = htons(0x0101);
-    // 0101-01FF exp number
 
     uint8_t advbuf[sizeof(ipv6_na.eth) + sizeof(ipv6_na.ip6h) +
                    sizeof(ipv6_na.na)];
