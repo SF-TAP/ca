@@ -232,8 +232,8 @@ main(int argc, char** argv)
                    sizeof(ipv6_na.na)];
 
     memcpy(advbuf, &ipv6_na.eth, sizeof(ipv6_na.eth));
-    memcpy(advbuf + sizeof(ipv6_na.ip6h), &ipv6_na.ip6h, sizeof(ipv6_na.ip6h));
-    memcpy(advbuf + sizeof(ipv6_na.ip6h) + sizeof(ipv6_na.ip6h), &ipv6_na.na,
+    memcpy(advbuf + sizeof(ipv6_na.eth), &ipv6_na.ip6h, sizeof(ipv6_na.ip6h));
+    memcpy(advbuf + sizeof(ipv6_na.eth) + sizeof(ipv6_na.ip6h), &ipv6_na.na,
            sizeof(ipv6_na.na));
 
     int ret;
