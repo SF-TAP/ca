@@ -69,7 +69,7 @@ main(int argc, char** argv)
 
     }
 
-    uint8_t  dst_mac[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+    uint8_t  dst_mac[6] = {0x33, 0x33, 0, 0, 0, 1};
     struct ether_addr src_mac;
     memset(&src_mac, 0, sizeof(src_mac));
 
@@ -185,7 +185,7 @@ main(int argc, char** argv)
     ipv6_na.ip6h.ip6_nxt  = IPPROTO_ICMPV6;
     ipv6_na.ip6h.ip6_hlim = 0xff;
 
-    uint8_t ipv6_dst[16] = {0x33, 0x33, 0, 0,
+    uint8_t ipv6_dst[16] = {0xff, 0x02, 0, 0,
                                0,    0, 0, 0,
                                0,    0, 0, 0,
                                0,    0, 0, 1};
