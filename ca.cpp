@@ -185,7 +185,7 @@ main(int argc, char** argv)
     ipv6_na.ip6h.ip6_nxt  = IPPROTO_ICMPV6;
     ipv6_na.ip6h.ip6_hlim = 0xff;
 
-    uint8_t ipv6_dst[16] = {0xff, 0x02, 0, 0,
+    uint8_t ipv6_dst[16] = {0x33, 0x33, 0, 0,
                                0,    0, 0, 0,
                                0,    0, 0, 0,
                                0,    0, 0, 1};
